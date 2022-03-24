@@ -1,11 +1,8 @@
 import fetch, {Response} from 'node-fetch';
 import {backoff, Config as RetryConfig} from '../utils/http'
+import { Credential } from './config'
 
 
-type ApiCredential = {
-    apiKey: string,
-    siteId: string
-}
 
 type Conf = {
     retryConfig?: RetryConfig
@@ -15,24 +12,32 @@ const API_ROUTE = 'https://track.customer.io/api/v1/customers'
 
 
 export class Customers {
-    readonly credential: Readonly<ApiCredential>
+    readonly credential: Readonly<Credential>
     readonly conf: Readonly<Conf>
 
-    constructor (credential:Readonly<ApiCredential>, conf: Readonly<Conf> = {}) {
+    constructor (credential:Readonly<Credential>, conf: Readonly<Conf> = {}) {
         this.credential = credential
         this.conf = conf
+    }
+
+    public static isValidIdentifier = (primaryKey: unknown): primaryKey is (number | string) => {
+        const primaryKeyType = typeof primaryKey
+        if ( primaryKeyType !== 'string' && primaryKeyType !== 'number') return false
+        
+        return true
     }
 
     private _basicAuth (): string {
         return `Basic ${this.credential.siteId}:${this.credential.siteId}`
     }
 
-    public async upsert (id: string, attributes: Record<string, unknown>, updateOnly: boolean = false) {
+    public async upsert (id: string | number, attributes: Record<string, unknown>, updateOnly: boolean = false) {
         const task = async (): Promise<Response> => {
             const response = await fetch(`${API_ROUTE}/${id}`, { 
-                'body': JSON.stringify({
+                body: JSON.stringify({
                     ...attributes,
-                    id
+                    id,
+                    _update: updateOnly
                 }),
                 method: 'PUT', 
                 headers: {
