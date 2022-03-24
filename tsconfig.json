@@ -1,0 +1,29 @@
+{
+    "ts-node": {
+      "compilerOptions": {
+        "noUnusedLocals": false
+      }
+    },
+    "compilerOptions": {
+      "module": "commonjs",
+      "target": "es2019",
+      "lib": [
+        "es2020"
+      ],
+      "incremental": true,
+      "noImplicitReturns": true,
+      "noUnusedLocals": true,
+      "outDir": "build",
+      "declaration": true,
+      "esModuleInterop": true,
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true
+    },
+    "compileOnSave": true,
+    "include": [
+      "**/*.ts",
+    ],
+    "exclude": [
+      "node_modules"
+    ]
+  }
