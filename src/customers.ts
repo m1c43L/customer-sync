@@ -1,8 +1,6 @@
 import fetch, {Response} from 'node-fetch';
-import {backoff, Config as RetryConfig} from '../utils/http'
+import {backoff, Config as RetryConfig, HttpError} from '../utils/http'
 import { Credential } from './config'
-
-
 
 type Conf = {
     retryConfig?: RetryConfig
@@ -10,14 +8,13 @@ type Conf = {
 
 const API_ROUTE = 'https://track.customer.io/api/v1/customers'
 
-
 export class Customers {
     readonly credential: Readonly<Credential>
-    readonly conf: Readonly<Conf>
+    readonly config: Readonly<Conf>
 
     constructor (credential:Readonly<Credential>, conf: Readonly<Conf> = {}) {
         this.credential = credential
-        this.conf = conf
+        this.config = conf
     }
 
     public static isValidIdentifier = (primaryKey: unknown): primaryKey is (number | string) => {
@@ -28,7 +25,7 @@ export class Customers {
     }
 
     private _basicAuth (): string {
-        return `Basic ${this.credential.siteId}:${this.credential.siteId}`
+        return "Basic " + Buffer.from(`${this.credential.siteId}:${this.credential.apiKey}`).toString('base64')
     }
 
     public async upsert (id: string | number, attributes: Record<string, unknown>, updateOnly: boolean = false) {
@@ -46,18 +43,20 @@ export class Customers {
                 }
             })
             // backoff transcient errors
-            if (response.status >= 500) { 
-                throw new Error(JSON.stringify(response.json()))
+            // for 429 we wan't to check for  a `retry-after` header, 
+            // but it's not required according to docs
+            if (response.status >= 500 /* response.status === 429*/) { 
+                throw new HttpError(response.status, await response.text())
             }
             return response
         }
 
-        const response = await backoff(task, this.conf.retryConfig)
-        // throw on non-transcient error
-        if (response.status > 200) 
-            throw new Error(JSON.stringify(response.json()))
+        const response = await backoff(task, this.config.retryConfig)
+        if (response.status !== 200) {
+            throw new  HttpError(response.status, await response.text())
+        }            
 
-        return response.json()
+        return  response.json()
     }
 
     public async delete (id: string) {
@@ -75,7 +74,7 @@ export class Customers {
             return response
         }
 
-        const response = await backoff(task, this.conf.retryConfig)
+        const response = await backoff(task, this.config.retryConfig)
         // throw on non-transcient error
         if (response.status > 200) 
             throw new Error(JSON.stringify(response.json()))

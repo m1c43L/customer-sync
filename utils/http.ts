@@ -10,9 +10,9 @@ const delay = (millis: number) => new Promise((resolve) => {
 })
 
 
-export const backoff = async<T>(task: () => Promise<T>, config?: Config): Promise<T> => {
-    const { initalDelay = 100, multiplier = 3, maxDelay = 1000} = config
-      
+export const backoff = async<T>(task: () => Promise<T>, config: Config = {}): Promise<T> => {
+    const { initalDelay = 100, multiplier = 3, maxDelay = 500} = config
+    
     let { maxRetries = 3  } = config
     let currentDelay = initalDelay
     let error: unknown
@@ -27,4 +27,10 @@ export const backoff = async<T>(task: () => Promise<T>, config?: Config): Promis
     }
 
     throw error
+}
+
+export class HttpError extends Error {
+    constructor(code: number, body: any) {
+        super(`${code}: ${body}`)
+    }
 }

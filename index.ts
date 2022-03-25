@@ -20,7 +20,7 @@ const run = async () => {
     }
 
   const result = await sync(parseDataJsonFile(loadJsonSync(dataPath)), parseConfig(loadJsonSync(configPath)))
-  console.log(result)
+  console.log('Synced ', result.length, ' rows')
 }
 
 run()

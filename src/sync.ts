@@ -4,7 +4,7 @@ import Queue from 'p-queue'
 
 const transform = (mappings: MappingItem[]) => (row: Record<string, unknown>) => { 
     return mappings.reduce((accRow, { from, to}) => {
-        if (from in accRow) {
+        if (from !== to && from in accRow) {
             accRow[to]= accRow[from]
             delete accRow[from]
         }

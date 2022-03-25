@@ -19,10 +19,6 @@
       "experimentalDecorators": true,
       "emitDecoratorMetadata": true,
       "allowJs": true,
-      "typeRoots": [
-        "./types",
-        "./node_modules/@types"
-      ],
       
     },
     "compileOnSave": true,
