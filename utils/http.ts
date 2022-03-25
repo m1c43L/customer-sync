@@ -11,8 +11,7 @@ const delay = (millis: number) => new Promise((resolve) => {
 
 
 export const backoff = async<T>(task: () => Promise<T>, config: Config = {}): Promise<T> => {
-    const { initalDelay = 100, multiplier = 3, maxDelay = 500} = config
-    
+    const { initalDelay = 500, multiplier = 2, maxDelay = 1000} = config
     let { maxRetries = 3  } = config
     let currentDelay = initalDelay
     let error: unknown
@@ -22,7 +21,7 @@ export const backoff = async<T>(task: () => Promise<T>, config: Config = {}): Pr
         } catch (_error) {
             error = _error
             await delay(currentDelay)
-            currentDelay = Math.min(maxDelay, initalDelay * multiplier)
+            currentDelay = Math.min(maxDelay, currentDelay * multiplier)
         }
     }
 

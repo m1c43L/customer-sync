@@ -19,8 +19,15 @@ const run = async () => {
         dataPath = `${dataPath}.json`
     }
 
-  const result = await sync(parseDataJsonFile(loadJsonSync(dataPath)), parseConfig(loadJsonSync(configPath)))
-  console.log('Synced ', result.length, ' rows')
+    const config = parseConfig(loadJsonSync(configPath))
+    const data = parseDataJsonFile(loadJsonSync(dataPath))
+
+    if (config.updateOnly) {
+        console.warn('warning: `updateOnly` is enabled, new customers will not be added.')
+    }
+
+    const result = await sync(data,config)
+    console.log('synced ', result.length, ' rows')
 }
 
 run()

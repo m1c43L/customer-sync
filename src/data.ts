@@ -1,28 +1,31 @@
 import * as z from 'zod'
+import { MappingItem } from './config'
 
 export type DataItem = z.infer<typeof DataItemShape>
-const DataItemShape = z.object({
-    // transforming received value
-    // to be unix timestamp
-    created_at: z.string().or(z.number()).transform((value) => {
-        if (typeof value === 'number') {
-            return value
-        }
-        return (new Date(value).valueOf() / 1000) // convert to epoch seconds
-    }).optional(),
-
-}).passthrough()
+const DataItemShape = z.record(z.unknown())
 
 const DataShape = z.array(DataItemShape)
 
-/**
- * Note: this may transform properties upon validation
- * example:
- * - `created_at` are converted from string to unix timestamp
- * 
- * @param data 
- * @returns 
- */
 export const parseDataJsonFile = (data: unknown) => {
     return DataShape.parse(data)
+}
+
+export const transform = (mappings: MappingItem[]) => (row: Readonly<Record<string, unknown>>) => { 
+    const transformed = mappings.reduce((accRow, { from, to}) => {
+        if (from !== to && from in accRow) {
+            accRow[to]= accRow[from]
+            delete accRow[from]
+        }
+        return accRow 
+        // `{ ...row}` creates a new object to avoid upward mutation
+    }, { ...row } as Record<string, unknown>)
+
+
+    // try to cast fixed fields
+    if (typeof transformed['created_at'] === 'string') {
+         // convert to epoch seconds as per documentation specified
+        transformed['created_at'] = (new Date(transformed['created_at']).valueOf() / 1000)
+    }
+
+    return transformed
 }

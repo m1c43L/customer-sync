@@ -17,7 +17,11 @@ const ConfigShape = z.object({
     parallelism: z.number(),
     userId: z.string(),
     mappings: z.array(MappingItemShape),
-    credential: CredentialShape
+    credential: CredentialShape,
+
+    // when `true`, will not create customer if data
+    // the customer does not exists
+    updateOnly: z.boolean().optional()
 })
 
 export const parseConfig = (configShape: unknown) => {

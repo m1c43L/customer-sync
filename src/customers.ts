@@ -17,7 +17,7 @@ export class Customers {
         this.config = conf
     }
 
-    public static isValidIdentifier = (primaryKey: unknown): primaryKey is (number | string) => {
+    public static isPossibleId = (primaryKey: unknown): primaryKey is (number | string) => {
         const primaryKeyType = typeof primaryKey
         if ( primaryKeyType !== 'string' && primaryKeyType !== 'number') return false
         
@@ -28,7 +28,10 @@ export class Customers {
         return "Basic " + Buffer.from(`${this.credential.siteId}:${this.credential.apiKey}`).toString('base64')
     }
 
-    public async upsert (id: string | number, attributes: Record<string, unknown>, updateOnly: boolean = false) {
+    /**
+     * @returns promise of `{}`
+     */
+    public async upsert (id: string, attributes: Record<string, unknown>, updateOnly: boolean = false): Promise<{}> {
         const task = async (): Promise<Response> => {
             const response = await fetch(`${API_ROUTE}/${id}`, { 
                 body: JSON.stringify({
@@ -43,8 +46,8 @@ export class Customers {
                 }
             })
             // backoff transcient errors
-            // for 429 we wan't to check for  a `retry-after` header, 
-            // but it's not required according to docs
+            // for 429 we wan't to check for a `retry-after` header, 
+            // we're going to skip it for now
             if (response.status >= 500 /* response.status === 429*/) { 
                 throw new HttpError(response.status, await response.text())
             }
@@ -53,32 +56,11 @@ export class Customers {
 
         const response = await backoff(task, this.config.retryConfig)
         if (response.status !== 200) {
+            // non-retryable errors propagates
+            // transcient errors also propagates after exhaustive retries
             throw new  HttpError(response.status, await response.text())
         }            
 
         return  response.json()
-    }
-
-    public async delete (id: string) {
-        const task = async (): Promise<Response> => {
-            const response = await fetch(`${API_ROUTE}/${id}`, { 
-                method: 'DELETE', 
-                headers: {
-                    'Authorization': this._basicAuth()
-                }
-            })
-            // backoff transcient errors
-            if (response.status >= 500) { 
-                throw new Error(JSON.stringify(response.json()))
-            }
-            return response
-        }
-
-        const response = await backoff(task, this.config.retryConfig)
-        // throw on non-transcient error
-        if (response.status > 200) 
-            throw new Error(JSON.stringify(response.json()))
-
-        return response.json()
     }
 }
