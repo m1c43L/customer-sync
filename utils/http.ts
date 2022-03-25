@@ -10,7 +10,7 @@ const delay = (millis: number) => new Promise((resolve) => {
 })
 
 
-export const backoff = async<T>(task: () => Promise<T>, config: Config = {}): Promise<T> => {
+export const backoffRetry = async<T>(task: () => Promise<T>, config: Config = {}): Promise<T> => {
     const { initalDelay = 500, multiplier = 2, maxDelay = 1000} = config
     let { maxRetries = 3  } = config
     let currentDelay = initalDelay

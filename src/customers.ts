@@ -1,5 +1,5 @@
 import fetch, {Response} from 'node-fetch';
-import {backoff, Config as RetryConfig, HttpError} from '../utils/http'
+import {backoffRetry, Config as RetryConfig, HttpError} from '../utils/http'
 import { Credential } from './config'
 
 type Conf = {
@@ -54,10 +54,9 @@ export class Customers {
             return response
         }
 
-        const response = await backoff(task, this.config.retryConfig)
+        const response = await backoffRetry(task, this.config.retryConfig)
         if (response.status !== 200) {
             // non-retryable errors propagates
-            // transcient errors also propagates after exhaustive retries
             throw new  HttpError(response.status, await response.text())
         }            
 

@@ -2,6 +2,7 @@ import { parseConfig } from './src/config'
 import { parseDataJsonFile } from './src/data'
 import { sync } from './src/sync'
 import { loadJsonSync } from './utils/file'
+import cliProgress  from 'cli-progress';
 
 const run = async () => {
     const args = [...process.argv]
@@ -26,7 +27,14 @@ const run = async () => {
         console.warn('warning: `updateOnly` is enabled, new customers will not be added.')
     }
 
-    const result = await sync(data,config)
+    const progress = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+    progress.start(data.length,  0)
+    
+    const result = await sync(data,config, (count) => { 
+        progress.increment(count)
+    })
+    progress.stop()
+
     console.log('synced ', result.length, ' rows')
 }
 
